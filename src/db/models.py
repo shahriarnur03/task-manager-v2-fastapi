@@ -9,6 +9,6 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=
                 True)
     title = Column(String, nullable=False)
-    completed = Column(Boolean, default=False)
+    isCompleted = Column(Boolean, default=False)
     
     
