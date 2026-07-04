@@ -3,7 +3,7 @@ from src.db.models import Task
 def create_task(db, task_data: Task):
     task = Task(
         title = task_data.title,
-        completed = task_data.isCompleted
+        isCompleted = task_data.isCompleted
     )
 
     db.add(task)
@@ -27,3 +27,12 @@ def update_task(db, task_id: int, update_data):
     db.commit()
     db.refresh(task)
     return task
+
+def delete_task(db, task_id: int):
+    task = db.query(Task).filter(task_id == Task.id).first()
+    
+    if not task:
+        return None
+    db.delete(task)
+    db.refresh()
+    return True
