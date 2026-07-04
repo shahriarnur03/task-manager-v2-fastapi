@@ -1,34 +1,80 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from src.core.response import paginated_response, success_response
 from src.db.deps import get_db
 from src.schemas.task import Task, TaskCreate
+from src.schemas.response import ApiResponse, PaginatedResponse
 from src.services import task_service
 
 router = APIRouter()
 
-@router.post("/tasks", response_model=Task)
+@router.post(
+    "/tasks",
+    response_model=ApiResponse[Task],
+    response_model_exclude_none=True,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_task(task: TaskCreate, db: Session=Depends(get_db)):
-    return task_service.create_task(db, task)
+    created_task = task_service.create_task(db, task)
+    return success_response(
+        message="Task created successfully.",
+        data=created_task,
+        status_code=status.HTTP_201_CREATED,
+    )
 
-@router.get("/tasks")
-def get_tasks(db: Session=Depends(get_db)):
-    return task_service.get_task(db)
+@router.get(
+    "/tasks",
+    response_model=PaginatedResponse[Task],
+)
+def get_tasks(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1, le=100),
+    db: Session=Depends(get_db),
+):
+    result = task_service.get_tasks(db, page=page, limit=limit)
+    return paginated_response(
+        message="Tasks retrieved successfully.",
+        data=result["items"],
+        page=page,
+        limit=limit,
+        total=result["total"],
+    )
 
-@router.get("/tasks/{task_id}")
-def get_tast(task_id: int, db: Session=Depends(get_db)):
-    task = task_service.get_task_by_id(task_id, db)
+@router.get(
+    "/tasks/{task_id}",
+    response_model=ApiResponse[Task],
+    response_model_exclude_none=True,
+)
+def get_task(task_id: int, db: Session=Depends(get_db)):
+    task = task_service.get_task_by_id(db, task_id)
     if not task:
-        return {"error": "Task is not found"}
-    return task
+        raise HTTPException(status_code=404, detail="Task not found")
+    return success_response(
+        message="Task retrieved successfully.",
+        data=task,
+    )
 
-@router.put("/tasks/{task_id}")
+@router.put(
+    "/tasks/{task_id}",
+    response_model=ApiResponse[Task],
+    response_model_exclude_none=True,
+)
 def update_task(task_id: int, task: TaskCreate, db: Session=Depends(get_db)):
-    updated = task_service.update_task(task_id, task, db)
+    updated = task_service.update_task(db, task_id, task)
     if not updated:
-        return {"error": "Task not found"}
-    return updated
+        raise HTTPException(status_code=404, detail="Task not found")
+    return success_response(
+        message="Task updated successfully.",
+        data=updated,
+    )
 
-@router.delete("/tasks/{task_id}")
+@router.delete(
+    "/tasks/{task_id}",
+    response_model=ApiResponse[None],
+    response_model_exclude_none=True,
+)
 def delete_task(task_id: int, db: Session=Depends(get_db)):
-    task_service.delete_task(task_id)
-    return {"message": "Deleted"}
+    deleted = task_service.delete_task(db, task_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return success_response(message="Task deleted successfully.")

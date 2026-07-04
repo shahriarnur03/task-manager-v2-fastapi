@@ -6,3 +6,5 @@ class TaskCreate(BaseModel):
     
 class Task(TaskCreate):
     id: int
+
+    model_config = {"from_attributes": True}

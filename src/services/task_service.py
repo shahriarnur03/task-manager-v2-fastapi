@@ -1,9 +1,10 @@
 from src.db.models import Task
+from src.schemas.task import TaskCreate
 
-def create_task(db, task_data: Task):
+def create_task(db, task_data: TaskCreate):
     task = Task(
-        title = task_data.title,
-        isCompleted = task_data.isCompleted
+        title=task_data.title,
+        isCompleted=task_data.isCompleted
     )
 
     db.add(task)
@@ -12,8 +13,14 @@ def create_task(db, task_data: Task):
 
     return task
 
-def get_task(db):
-    return db.query(Task).all()
+def get_tasks(db, page: int = 1, limit: int = 10):
+    offset = (page - 1) * limit
+    query = db.query(Task)
+
+    return {
+        "items": query.offset(offset).limit(limit).all(),
+        "total": query.count(),
+    }
 
 def get_task_by_id(db, task_id: int):
     return db.query(Task).filter(Task.id == task_id).first()
@@ -23,7 +30,7 @@ def update_task(db, task_id: int, update_data):
     if not task:
         return None
     task.title = update_data.title
-    task.completed = update_data.isCompleted
+    task.isCompleted = update_data.isCompleted
     db.commit()
     db.refresh(task)
     return task
@@ -34,5 +41,5 @@ def delete_task(db, task_id: int):
     if not task:
         return None
     db.delete(task)
-    db.refresh()
+    db.commit()
     return True
