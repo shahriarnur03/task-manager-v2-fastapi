@@ -1,4 +1,4 @@
-from src.db.models import Task
+from database.models.task import Task
 from src.schemas.task import TaskCreate
 
 def create_task(db, task_data: TaskCreate):
