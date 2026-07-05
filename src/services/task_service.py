@@ -1,45 +1,49 @@
-from database.models.task import Task
+from sqlalchemy.orm import Session
+from src.repositories.task_repository import TaskRepository
 from src.schemas.task import TaskCreate
 
-def create_task(db, task_data: TaskCreate):
-    task = Task(
+
+repository = TaskRepository()
+
+def create_task(db: Session, task_data: TaskCreate):
+    return repository.create(
+        db=db,
         title=task_data.title,
-        isCompleted=task_data.isCompleted
+        is_completed=task_data.isCompleted
     )
 
-    db.add(task)
-    db.commit()
-    db.refresh(task)
+def get_tasks(db: Session, page: int, limit: int):
+    return repository.get_all(
+        db=db,
+        page=page,
+        limit=limit
+    )
 
-    return task
+def get_task_by_id(db: Session, task_id: int):
+    return repository.get_by_id(
+        db=db,
+        task_id=task_id
+    )
 
-def get_tasks(db, page: int = 1, limit: int = 10):
-    offset = (page - 1) * limit
-    query = db.query(Task)
-
-    return {
-        "items": query.offset(offset).limit(limit).all(),
-        "total": query.count(),
-    }
-
-def get_task_by_id(db, task_id: int):
-    return db.query(Task).filter(Task.id == task_id).first()
-
-def update_task(db, task_id: int, update_data):
-    task = db.query(Task).filter(task_id == Task.id).first()
+def update_task(db: Session, task_id: int, update_data: TaskCreate):
+    task = repository.get_by_id(db=db, task_id=task_id)
     if not task:
         return None
     task.title = update_data.title
     task.isCompleted = update_data.isCompleted
-    db.commit()
-    db.refresh(task)
-    return task
+    return repository.update(
+        db=db,
+        task=task
+    )
 
-def delete_task(db, task_id: int):
-    task = db.query(Task).filter(task_id == Task.id).first()
+def delete_task(db: Session, task_id: int):
+    task = repository.get_by_id(db=db, task_id=task_id)
     
     if not task:
         return None
-    db.delete(task)
-    db.commit()
+    repository.delete(
+        db=db,
+        task=task
+    )
+    
     return True

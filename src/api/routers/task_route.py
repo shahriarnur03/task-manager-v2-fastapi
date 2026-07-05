@@ -1,15 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from src.core.response import paginated_response, success_response
-from src.db.deps import get_db
+from src.database.deps import get_db
 from src.schemas.task import Task, TaskCreate
 from src.schemas.response import ApiResponse, PaginatedResponse
 from src.services import task_service
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/tasks",
+    tags=["Tasks"]
+)
 
 @router.post(
-    "/tasks",
+    "/",
     response_model=ApiResponse[Task],
     response_model_exclude_none=True,
     status_code=status.HTTP_201_CREATED,
@@ -23,7 +26,7 @@ def create_task(task: TaskCreate, db: Session=Depends(get_db)):
     )
 
 @router.get(
-    "/tasks",
+    "/",
     response_model=PaginatedResponse[Task],
 )
 def get_tasks(
@@ -41,7 +44,7 @@ def get_tasks(
     )
 
 @router.get(
-    "/tasks/{task_id}",
+    "/{task_id}",
     response_model=ApiResponse[Task],
     response_model_exclude_none=True,
 )
@@ -55,7 +58,7 @@ def get_task(task_id: int, db: Session=Depends(get_db)):
     )
 
 @router.put(
-    "/tasks/{task_id}",
+    "/{task_id}",
     response_model=ApiResponse[Task],
     response_model_exclude_none=True,
 )
@@ -69,7 +72,7 @@ def update_task(task_id: int, task: TaskCreate, db: Session=Depends(get_db)):
     )
 
 @router.delete(
-    "/tasks/{task_id}",
+    "/{task_id}",
     response_model=ApiResponse[None],
     response_model_exclude_none=True,
 )
