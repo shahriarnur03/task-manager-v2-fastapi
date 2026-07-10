@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from src.repositories.task_repository import TaskRepository
-from src.schemas.task import TaskCreate
+from src.schemas.task import (TaskCreate, TaskUpdate)
 
-
+# Business Logic
 repository = TaskRepository()
 
 def create_task(db: Session, task_data: TaskCreate):
@@ -25,12 +25,18 @@ def get_task_by_id(db: Session, task_id: int):
         task_id=task_id
     )
 
-def update_task(db: Session, task_id: int, update_data: TaskCreate):
+def update_task(db: Session, task_id: int, update_data: TaskUpdate):
     task = repository.get_by_id(db=db, task_id=task_id)
     if not task:
         return None
-    task.title = update_data.title
-    task.isCompleted = update_data.isCompleted
+    
+    update_fields = update_data.model_dump(
+        exclude_unset=True
+    )
+
+    for field, value in update_fields.items():
+        setattr(task, field, value)
+
     return repository.update(
         db=db,
         task=task

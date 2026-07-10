@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from src.core.response import paginated_response, success_response
 from src.database.deps import get_db
-from src.schemas.task import Task, TaskCreate
+from src.schemas.task import (
+    TaskCreate, TaskResponse, TaskUpdate
+)
 from src.schemas.response import ApiResponse, PaginatedResponse
 from src.services import task_service
 
@@ -13,7 +15,7 @@ router = APIRouter(
 
 @router.post(
     "/",
-    response_model=ApiResponse[Task],
+    response_model=ApiResponse[TaskResponse],
     response_model_exclude_none=True,
     status_code=status.HTTP_201_CREATED,
 )
@@ -27,7 +29,7 @@ def create_task(task: TaskCreate, db: Session=Depends(get_db)):
 
 @router.get(
     "/",
-    response_model=PaginatedResponse[Task],
+    response_model=PaginatedResponse[TaskResponse],
 )
 def get_tasks(
     page: int = Query(default=1, ge=1),
@@ -45,7 +47,7 @@ def get_tasks(
 
 @router.get(
     "/{task_id}",
-    response_model=ApiResponse[Task],
+    response_model=ApiResponse[TaskResponse],
     response_model_exclude_none=True,
 )
 def get_task(task_id: int, db: Session=Depends(get_db)):
@@ -57,12 +59,12 @@ def get_task(task_id: int, db: Session=Depends(get_db)):
         data=task,
     )
 
-@router.put(
+@router.patch(
     "/{task_id}",
-    response_model=ApiResponse[Task],
+    response_model=ApiResponse[TaskResponse],
     response_model_exclude_none=True,
 )
-def update_task(task_id: int, task: TaskCreate, db: Session=Depends(get_db)):
+def update_task(task_id: int, task: TaskUpdate, db: Session=Depends(get_db)):
     updated = task_service.update_task(db, task_id, task)
     if not updated:
         raise HTTPException(status_code=404, detail="Task not found")
