@@ -29,13 +29,15 @@ def update_task(db: Session, task_id: int, update_data: TaskUpdate):
     task = repository.get_by_id(db=db, task_id=task_id)
     if not task:
         return None
-    
+    # model_dump -> convert a model into a dictionary
+    # exclude_unset -> refer that, only include actual field that were provide by the user. 
     update_fields = update_data.model_dump(
         exclude_unset=True
     )
 
     for field, value in update_fields.items():
         setattr(task, field, value)
+        #setattr(object, attribute_name, value)
 
     return repository.update(
         db=db,
